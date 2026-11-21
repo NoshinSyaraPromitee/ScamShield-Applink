@@ -1,0 +1,13 @@
+import 'package:dio/dio.dart';
+import 'package:injectable/injectable.dart';
+import 'package:scamshield/core/network/api_endpoints.dart';
+import 'package:scamshield/core/network/failure.dart';
+
+@lazySingleton
+class HelplineRemoteDataSource {
+  HelplineRemoteDataSource(this._dio);
+
+  final Dio _dio;
+
+  Future<Object?> getHelplines() => guardRequest(() async => (await _dio.get<Object?>(ApiEndpoints.helplines)).data);
+}
