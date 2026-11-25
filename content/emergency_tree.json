@@ -1,0 +1,81 @@
+﻿{
+  "version": 1,
+  "note": "Fixed tree. No AI-generated advice. Every hotline must be verified on its official site before submission (set verified=true + date).",
+  "hotlines": [
+    { "id": "emergency", "name_en": "National Emergency Service", "name_bn": "Jatiyo Joruri Seba", "number": "999", "source": "https://999.gov.bd", "verified": false },
+    { "id": "govinfo", "name_en": "Government Information & Services", "name_bn": "Sorkari Totthyo Seba", "number": "333", "source": "https://333.gov.bd", "verified": false },
+    { "id": "women_child", "name_en": "Violence against Women & Children helpline", "name_bn": "Nari o Shishu Nirjaton Helpline", "number": "109", "source": "https://mowca.gov.bd", "verified": false },
+    { "id": "btrc", "name_en": "BTRC complaint", "name_bn": "BTRC Obhijog", "number": "100", "source": "https://btrc.gov.bd", "verified": false },
+    { "id": "bkash", "name_en": "bKash helpline", "name_bn": "bKash Helpline", "number": "16247", "source": "https://www.bkash.com/help", "verified": false },
+    { "id": "nagad", "name_en": "Nagad helpline", "name_bn": "Nagad Helpline", "number": "16167", "source": "https://nagad.com.bd", "verified": false },
+    { "id": "rocket", "name_en": "Rocket (DBBL) helpline", "name_bn": "Rocket Helpline", "number": "16216", "source": "https://www.dutchbanglabank.com", "verified": false },
+    { "id": "banglalink", "name_en": "Banglalink customer care", "name_bn": "Banglalink Customer Care", "number": "121", "source": "https://www.banglalink.net", "verified": false },
+    { "id": "pcsw", "name_en": "Police Cyber Support for Women", "name_bn": "Police Cyber Support for Women", "number": "facebook.com/PCSW.PHQ", "source": "https://www.police.gov.bd", "verified": false }
+  ],
+  "root": "start",
+  "nodes": {
+    "start": {
+      "q_en": "What happened?",
+      "q_bn": "Ki hoyeche?",
+      "options": [
+        { "key": "1", "en": "I shared an OTP or PIN", "bn": "OTP/PIN diye felechi", "next": "otp" },
+        { "key": "2", "en": "I sent money to a scammer", "bn": "Taka pathiye felechi", "next": "money" },
+        { "key": "3", "en": "I got a suspicious call", "bn": "Sondehojonok call peyechi", "next": "call" },
+        { "key": "4", "en": "I clicked a link or installed an app", "bn": "Link e click/app install korechi", "next": "link" },
+        { "key": "5", "en": "My Facebook/account was hacked", "bn": "Facebook/account hack hoyeche", "next": "hacked" },
+        { "key": "6", "en": "Someone is threatening me", "bn": "Keu bhoy dekhacche", "next": "threat" }
+      ]
+    },
+    "otp": {
+      "options": [
+        { "key": "1", "en": "Mobile banking (bKash/Nagad/Rocket)", "bn": "Mobile banking", "next": "otp_mfs" },
+        { "key": "2", "en": "Bank card or account", "bn": "Bank card/account", "next": "otp_bank" },
+        { "key": "3", "en": "Facebook/WhatsApp/email", "bn": "Facebook/WhatsApp/email", "next": "hacked" }
+      ],
+      "q_en": "Which account was the code for?",
+      "q_bn": "Code ta kon account er?"
+    },
+    "otp_mfs": {
+      "end": true,
+      "steps_en": ["Call your provider's helpline NOW and ask them to block the account.", "Change your PIN from the app or by dialling the USSD menu.", "Do not share any new code with anyone, even 'customer care'.", "Report the scammer's number to Banglalink 121."],
+      "steps_bn": ["EKHONI helpline e call kore account block korte bolun.", "App ba USSD theke PIN change korun.", "Notun kono code karo sathe share korben na, 'customer care' holeo na.", "Scammer er number Banglalink 121 e report korun."],
+      "hotlines": ["bkash", "nagad", "rocket", "banglalink"]
+    },
+    "otp_bank": {
+      "end": true,
+      "steps_en": ["Call the number on the back of your card and block it.", "Ask the bank to stop pending transactions.", "Change your internet banking password."],
+      "steps_bn": ["Card er pichoner number e call kore card block korun.", "Bank ke pending transaction bondho korte bolun.", "Internet banking password change korun."],
+      "hotlines": ["emergency"]
+    },
+    "money": {
+      "end": true,
+      "steps_en": ["Call your mobile banking helpline immediately. The faster you call, the better the chance to freeze the money.", "Write down the scammer's number, amount, time and transaction ID.", "File a GD at your nearest police station with these details.", "Never pay anyone who promises to 'recover' your money."],
+      "steps_bn": ["Sathe sathe mobile banking helpline e call korun. Joto taratari, taka atkano tototai shombhob.", "Scammer er number, taka, shomoy ar transaction ID likhe rakhun.", "Kachher thanay ei totthyo diye GD korun.", "Je 'taka uddhar' kore dibe bole taka chay, take kokhono taka diben na."],
+      "hotlines": ["bkash", "nagad", "rocket", "emergency"]
+    },
+    "call": {
+      "end": true,
+      "steps_en": ["Hang up. Real banks and bKash never ask for your PIN or OTP on a call.", "If you shared nothing, you are safe. Block the number.", "If you shared a code or PIN, go back and choose 'I shared an OTP or PIN'.", "Report the number to Banglalink 121."],
+      "steps_bn": ["Call kete din. Asol bank ba bKash kokhono call e PIN/OTP chay na.", "Kichu share na korle apni nirapod. Number block korun.", "Code/PIN diye thakle 'OTP/PIN diye felechi' option e jan.", "Number ta Banglalink 121 e report korun."],
+      "hotlines": ["banglalink"]
+    },
+    "link": {
+      "end": true,
+      "steps_en": ["Turn off mobile data / Wi-Fi.", "Uninstall any app you installed from the link.", "If you typed a password on that page, change it now from a trusted device.", "Check your mobile banking balance and call the helpline if anything changed."],
+      "steps_bn": ["Mobile data/Wi-Fi bondho korun.", "Link theke install kora app uninstall korun.", "Oi page e password diye thakle, onno nirapod phone theke ekhoni change korun.", "Mobile banking balance check korun; kichu bodlale helpline e call korun."],
+      "hotlines": ["bkash", "nagad", "rocket"]
+    },
+    "hacked": {
+      "end": true,
+      "steps_en": ["Use 'Forgot password' to reset it and log out of all devices.", "Turn on two-factor authentication.", "Warn friends not to send money to messages from your account.", "Women can report to Police Cyber Support for Women."],
+      "steps_bn": ["'Forgot password' diye reset korun, shob device theke log out korun.", "Two-factor authentication chalu korun.", "Bondhuder janan, apnar account theke taka chaile jeno na dey.", "Nari ra Police Cyber Support for Women e report korte paren."],
+      "hotlines": ["pcsw", "emergency"]
+    },
+    "threat": {
+      "end": true,
+      "steps_en": ["Do not pay and do not reply.", "Take screenshots of every message.", "If you are in danger, call 999 now.", "Women and children can call 109."],
+      "steps_bn": ["Taka diben na, reply korben na.", "Shob message er screenshot rakhun.", "Bipode thakle EKHONI 999 e call korun.", "Nari o shishu 109 e call korte paren."],
+      "hotlines": ["emergency", "women_child", "pcsw"]
+    }
+  }
+}

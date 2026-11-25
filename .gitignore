@@ -1,0 +1,30 @@
+﻿# Flutter / Dart
+app/build/
+app/.dart_tool/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/**/*.g.dart
+app/**/*.freezed.dart
+app/**/*.config.dart
+app/lib/l10n/gen/
+app/android/.gradle/
+app/android/local.properties
+app/android/app/google-services.json
+app/ios/Pods/
+*.iml
+.idea/
+
+# Go
+backend/bin/
+backend/.env
+backend/*.exe
+
+# Vercel / Node
+callbacks/.vercel/
+callbacks/node_modules/
+
+# Secrets + licensed files
+.env
+*.env
+ngrok.yml
+Applink-as-a-skill/
