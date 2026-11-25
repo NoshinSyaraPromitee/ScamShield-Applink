@@ -1,4 +1,4 @@
-﻿{
+{
   "version": 1,
   "note": "Fixed tree. No AI-generated advice. Every hotline must be verified on its official site before submission (set verified=true + date).",
   "hotlines": [
