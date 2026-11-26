@@ -18,6 +18,10 @@ type Config struct {
 	SMSURL   string // APPLINK_SMS_URL, e.g. http://localhost:7000/sms/send
 	AppID    string // APPLINK_APP_ID
 	Password string // APPLINK_PASSWORD (API key)
+	OTPRequestURL   string // APPLINK_OTP_REQUEST_URL
+	OTPVerifyURL    string // APPLINK_OTP_VERIFY_URL
+	SubscriptionURL string // APPLINK_SUBSCRIPTION_SEND_URL
+	ChargingInfoURL string // APPLINK_SUBSCRIPTION_CHARGING_INFO_URL
 }
 
 type Client struct {
