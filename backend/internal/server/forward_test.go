@@ -29,6 +29,13 @@ func (f *fakeSender) last() string {
 	return f.sent[len(f.sent)-1]
 }
 
+// all returns a copy of everything sent, safe to read while senders run.
+func (f *fakeSender) all() []string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([]string(nil), f.sent...)
+}
+
 func newFwd(s Sender) *Forwarder {
 	f := NewForwarder(s, nil)
 	f.window = 20 * time.Millisecond
@@ -56,7 +63,7 @@ func TestInlineSenderAndMultipartJoin(t *testing.T) {
 	f.Receive("01711111111", "01799999999 Your bKash is blo")
 	f.Receive("01711111111", "cked, send PIN now")
 	time.Sleep(100 * time.Millisecond)
-	if len(s.sent) != 1 || !strings.Contains(s.last(), "SABDHAN") {
-		t.Fatalf("got %v", s.sent)
+	if sent := s.all(); len(sent) != 1 || !strings.Contains(s.last(), "SABDHAN") {
+		t.Fatalf("got %v", sent)
 	}
 }

@@ -11,15 +11,17 @@ import (
 
 func main() {
 	client := applink.New(applink.Config{
-		SMSURL:   env("APPLINK_SMS_URL", "http://localhost:7000/sms/send"),
-		AppID:    os.Getenv("APPLINK_APP_ID"),
-		Password: os.Getenv("APPLINK_PASSWORD"),
+		SMSURL:          env("APPLINK_SMS_URL", "http://localhost:7000/sms/send"),
+		AppID:           os.Getenv("APPLINK_APP_ID"),
+		Password:        os.Getenv("APPLINK_PASSWORD"),
 		OTPRequestURL:   os.Getenv("APPLINK_OTP_REQUEST_URL"),
 		OTPVerifyURL:    os.Getenv("APPLINK_OTP_VERIFY_URL"),
 		SubscriptionURL: os.Getenv("APPLINK_SUBSCRIPTION_SEND_URL"),
 		ChargingInfoURL: os.Getenv("APPLINK_SUBSCRIPTION_CHARGING_INFO_URL"),
 	})
-	srv := server.New(server.NewForwarder(client, nil), nil) // no LLM fallback wired yet
+	fwd := server.NewForwarder(client, nil) // no LLM fallback wired yet
+	signup := server.NewSignup(client, client)
+	srv := server.New(server.NewRouter(client, fwd, signup), nil)
 	addr := env("ADDR", ":8080")
 	log.Println("ScamShield backend listening on", addr)
 	log.Fatal(http.ListenAndServe(addr, srv.Handler()))

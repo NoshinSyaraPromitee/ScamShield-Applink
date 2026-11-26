@@ -15,9 +15,9 @@ import (
 )
 
 type Config struct {
-	SMSURL   string // APPLINK_SMS_URL, e.g. http://localhost:7000/sms/send
-	AppID    string // APPLINK_APP_ID
-	Password string // APPLINK_PASSWORD (API key)
+	SMSURL          string // APPLINK_SMS_URL, e.g. http://localhost:7000/sms/send
+	AppID           string // APPLINK_APP_ID
+	Password        string // APPLINK_PASSWORD (API key)
 	OTPRequestURL   string // APPLINK_OTP_REQUEST_URL
 	OTPVerifyURL    string // APPLINK_OTP_VERIFY_URL
 	SubscriptionURL string // APPLINK_SUBSCRIPTION_SEND_URL
@@ -54,12 +54,14 @@ type sendResp struct {
 	StatusDetail string `json:"statusDetail"`
 }
 
-// SendSMS sends text to a local 01XXXXXXXXX number. AppLink can return HTTP 200
-// with an error in the body, so statusCode (S1000 = success) is what we check.
+// SendSMS sends text to `to`, which is either the raw AppLink address exactly as
+// received (e.g. "tel:8801..." or a masked "tel:B%3C4..."), or a local
+// 01XXXXXXXXX number. AppLink can return HTTP 200 with an error in the body, so
+// statusCode (S1000 = success) is what we check.
 func (c *Client) SendSMS(ctx context.Context, to, text string) error {
 	body, _ := json.Marshal(sendReq{
 		Version: "1.0", ApplicationID: c.cfg.AppID, Password: c.cfg.Password,
-		Message: text, Destinations: []string{"tel:88" + strings.TrimPrefix(to, "88")},
+		Message: text, Destinations: []string{Destination(to)},
 	})
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.cfg.SMSURL, bytes.NewReader(body))
 	if err != nil {
@@ -79,4 +81,14 @@ func (c *Client) SendSMS(ctx context.Context, to, text string) error {
 		return fmt.Errorf("applink: %s %s", out.StatusCode, out.StatusDetail)
 	}
 	return nil
+}
+
+// Destination turns a user key into an AppLink destination address. Raw
+// addresses ("tel:...", masked or not) are used unchanged: with number masking
+// on, rebuilding the address from digits would send to the wrong place.
+func Destination(to string) string {
+	if strings.HasPrefix(to, "tel:") {
+		return to
+	}
+	return "tel:88" + strings.TrimPrefix(to, "88")
 }

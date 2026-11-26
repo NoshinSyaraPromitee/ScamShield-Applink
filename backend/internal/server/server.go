@@ -3,17 +3,18 @@ package server
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/scamshield/backend/internal/applink"
 	"github.com/scamshield/backend/internal/detect"
 )
 
 type Server struct {
-	fwd *Forwarder
-	fb  detect.Fallback
+	router *Router
+	fb     detect.Fallback
 }
 
-func New(fwd *Forwarder, fb detect.Fallback) *Server { return &Server{fwd: fwd, fb: fb} }
+func New(router *Router, fb detect.Fallback) *Server { return &Server{router: router, fb: fb} }
 
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
@@ -45,8 +46,10 @@ func (s *Server) smsReceive(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, map[string]string{"statusCode": "E1312", "statusDetail": "bad request"})
 		return
 	}
-	if from := detect.NormalizeNumber(in.SourceAddress); from != "" {
-		s.fwd.Receive(from, in.Message)
+	// Key users by the raw sourceAddress: with number masking ON it is not a
+	// phone number, and converting it (as before) silently dropped every message.
+	if from := strings.TrimSpace(in.SourceAddress); from != "" {
+		s.router.Route(from, in.Message)
 	}
 	writeJSON(w, map[string]string{"statusCode": "S1000", "statusDetail": "Success"})
 }
