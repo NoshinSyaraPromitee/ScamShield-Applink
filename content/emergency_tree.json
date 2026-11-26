@@ -5,12 +5,12 @@
     { "id": "emergency", "name_en": "National Emergency Service", "name_bn": "Jatiyo Joruri Seba", "number": "999", "source": "https://999.gov.bd", "verified": false },
     { "id": "govinfo", "name_en": "Government Information & Services", "name_bn": "Sorkari Totthyo Seba", "number": "333", "source": "https://333.gov.bd", "verified": false },
     { "id": "women_child", "name_en": "Violence against Women & Children helpline", "name_bn": "Nari o Shishu Nirjaton Helpline", "number": "109", "source": "https://mowca.gov.bd", "verified": false },
-    { "id": "btrc", "name_en": "BTRC complaint", "name_bn": "BTRC Obhijog", "number": "100", "source": "https://btrc.gov.bd", "verified": false },
-    { "id": "bkash", "name_en": "bKash helpline", "name_bn": "bKash Helpline", "number": "16247", "source": "https://www.bkash.com/help", "verified": false },
-    { "id": "nagad", "name_en": "Nagad helpline", "name_bn": "Nagad Helpline", "number": "16167", "source": "https://nagad.com.bd", "verified": false },
+    { "id": "btrc", "name_en": "BTRC complaint", "name_bn": "BTRC Obhijog", "number": "100", "hours": "9am-5pm working days", "source": "https://btrc.gov.bd", "verified": true },
+    { "id": "bkash", "name_en": "bKash helpline", "name_bn": "bKash Helpline", "number": "16247", "source": "https://www.bkash.com/en/help/contact-us", "verified": true },
+    { "id": "nagad", "name_en": "Nagad helpline", "name_bn": "Nagad Helpline", "number": "16167", "source": "https://nagad.com.bd", "verified": true },
     { "id": "rocket", "name_en": "Rocket (DBBL) helpline", "name_bn": "Rocket Helpline", "number": "16216", "source": "https://www.dutchbanglabank.com", "verified": false },
     { "id": "banglalink", "name_en": "Banglalink customer care", "name_bn": "Banglalink Customer Care", "number": "121", "source": "https://www.banglalink.net", "verified": false },
-    { "id": "pcsw", "name_en": "Police Cyber Support for Women", "name_bn": "Police Cyber Support for Women", "number": "facebook.com/PCSW.PHQ", "source": "https://www.police.gov.bd", "verified": false }
+    { "id": "pcsw", "name_en": "Police Cyber Support for Women", "name_bn": "Police Cyber Support for Women", "number": "01320000888", "facebook": "facebook.com/PCSW.PHQ", "source": "https://police.portal.gov.bd", "verified": true }
   ],
   "root": "start",
   "nodes": {
@@ -79,3 +79,4 @@
     }
   }
 }
+
