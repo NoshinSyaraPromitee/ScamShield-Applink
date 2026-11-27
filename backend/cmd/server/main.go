@@ -21,7 +21,28 @@ func main() {
 	})
 	fwd := server.NewForwarder(client, nil) // no LLM fallback wired yet
 	signup := server.NewSignup(client, client)
-	srv := server.New(server.NewRouter(client, fwd, signup), nil)
+	router := server.NewRouter(client, fwd, signup)
+
+	if help, err := server.LoadHelp(env("HELP_TREE", "../content/emergency_tree.json"), client); err != nil {
+		log.Printf("help: %v (using short placeholder reply)", err)
+	} else {
+		router.WithHelp(help)
+	}
+
+	// Family Guard: the child (guardian) must have the paid plan.
+	// GUARD_REQUIRE_SUB=false skips that check for a demo before billing is live.
+	subs := server.NewSubscribers()
+	signup.OnActive = subs.Add
+	isSub := subs.Has
+	if os.Getenv("GUARD_REQUIRE_SUB") == "false" {
+		isSub = nil
+		log.Println("guard: plan check OFF (demo mode)")
+	}
+	guard := server.NewGuard(client, isSub)
+	fwd.OnHighRisk = guard.Alert
+	router.WithGuard(guard)
+
+	srv := server.New(router, nil).WithSubscriptions(subs, os.Getenv("APPLINK_APP_ID"), os.Getenv("APPLINK_PASSWORD"))
 	addr := env("ADDR", ":8080")
 	log.Println("ScamShield backend listening on", addr)
 	log.Fatal(http.ListenAndServe(addr, srv.Handler()))

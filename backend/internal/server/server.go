@@ -1,7 +1,9 @@
 package server
 
 import (
+	"crypto/subtle"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 
@@ -12,9 +14,22 @@ import (
 type Server struct {
 	router *Router
 	fb     detect.Fallback
+
+	// Subscription notifications (optional; see WithSubscriptions).
+	subs     *Subscribers
+	appID    string
+	password string
 }
 
 func New(router *Router, fb detect.Fallback) *Server { return &Server{router: router, fb: fb} }
+
+// WithSubscriptions lets /subscription/notify keep subs in sync. AppLink sends
+// our applicationId and password in the body; if appID/password are set, a
+// notification that doesn't match them is ignored.
+func (s *Server) WithSubscriptions(subs *Subscribers, appID, password string) *Server {
+	s.subs, s.appID, s.password = subs, appID, password
+	return s
+}
 
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
@@ -22,6 +37,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /scan/check", s.scanCheck)
 	mux.HandleFunc("POST /sms/receive", s.smsReceive)
 	mux.HandleFunc("POST /ussd/receive", s.ussdReceive)
+	mux.HandleFunc("POST /subscription/notify", s.subscriptionNotify)
+	mux.HandleFunc("POST /sms/report", s.ack)
+	mux.HandleFunc("POST /caas/notify", s.ack)
 	return mux
 }
 
@@ -54,7 +72,59 @@ func (s *Server) smsReceive(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"statusCode": "S1000", "statusDetail": "Success"})
 }
 
-// ussdReceive is a placeholder; the session handler is Maha's task.
+// subscriptionNotify is called by AppLink when a subscription changes
+// (e.g. "unreg scam", renewal, payment failure). The body contains our app
+// password, so it is never logged.
+func (s *Server) subscriptionNotify(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		ApplicationID      string `json:"applicationId"`
+		Password           string `json:"password"`
+		SubscriberID       string `json:"subscriberId"`
+		Status             string `json:"status"`
+		SubscriptionStatus string `json:"subscriptionStatus"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<16)).Decode(&in); err != nil {
+		writeJSON(w, map[string]string{"statusCode": "E1312", "statusDetail": "bad request"})
+		return
+	}
+	status := in.Status
+	if status == "" {
+		status = in.SubscriptionStatus
+	}
+	user := strings.TrimSpace(in.SubscriberID)
+
+	switch {
+	case s.subs == nil || user == "":
+		// nothing to update
+	case !s.trusted(in.ApplicationID, in.Password):
+		log.Printf("subscription/notify: ignored (applicationId/password mismatch)")
+	case applink.Active(status):
+		s.subs.Add(user)
+		log.Printf("subscription/notify: active (%s)", strings.ToUpper(status))
+	default:
+		// UNREGISTERED, BLOCKED, TEMPORARY_BLOCKED, ...: paid extras off.
+		s.subs.Remove(user)
+		log.Printf("subscription/notify: inactive (%s)", strings.ToUpper(status))
+	}
+	writeJSON(w, map[string]string{"statusCode": "S1000", "statusDetail": "Success"})
+}
+
+func (s *Server) trusted(appID, password string) bool {
+	if s.appID != "" && appID != s.appID {
+		return false
+	}
+	if s.password != "" && subtle.ConstantTimeCompare([]byte(password), []byte(s.password)) != 1 {
+		return false
+	}
+	return true
+}
+
+// ack answers AppLink callbacks we don't act on yet (delivery reports, CaaS).
+func (s *Server) ack(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, map[string]string{"statusCode": "S1000", "statusDetail": "Success"})
+}
+
+// ussdReceive is a placeholder: USSD is blocked until AppLink assigns a keyword.
 func (s *Server) ussdReceive(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"statusCode": "S1000", "statusDetail": "Success"})
 }
