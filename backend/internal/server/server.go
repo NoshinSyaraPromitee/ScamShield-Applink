@@ -55,7 +55,9 @@ func (s *Server) Handler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// CORS so the Flutter web build (another port) can call us.
 		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Device-Id, ngrok-skip-browser-warning")
+		if h := r.Header.Get("Access-Control-Request-Headers"); h != "" {
+			w.Header().Set("Access-Control-Allow-Headers", h) // the app sends X-App-Flavor, Accept-Language, ...
+		}
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
