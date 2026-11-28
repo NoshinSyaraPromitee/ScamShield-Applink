@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"strings"
 	"testing"
 	"time"
@@ -138,5 +139,20 @@ func TestSignupMarksSubscriber(t *testing.T) {
 	r.Route(masked, "scam 482913")
 	if !subs.Has(masked) {
 		t.Fatal("successful sign-up must mark the user subscribed")
+	}
+}
+
+func TestPairAppAndStatus(t *testing.T) {
+	s := &fakeSender{}
+	g := NewGuard(s, nil)
+	g.codes["4821"] = guardCode{parent: "tel:P", at: g.now()}
+	if got := g.PairApp(context.Background(), "app:demo", "9999"); got != "bad_code" {
+		t.Fatalf("got %q", got)
+	}
+	if got := g.PairApp(context.Background(), "app:demo", "4821"); got != "" {
+		t.Fatalf("got %q", got)
+	}
+	if !g.isGuardian("app:demo") || g.Guardians("tel:P") != 1 {
+		t.Fatal("not paired")
 	}
 }

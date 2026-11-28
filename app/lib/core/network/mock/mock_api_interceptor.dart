@@ -7,13 +7,19 @@ import 'package:scamshield/core/network/mock/mock_scan_analyzer.dart';
 /// Turn off completely with --dart-define=MOCK_API=false
 ///
 /// LIVE_SCAN=true sends POST /scan/check to the real Go backend (API_URL)
-/// and keeps everything else mocked. If the backend can't be reached
+/// and keeps everything else mocked. LIVE_GUARD=true does the same for the
+/// Family Guard calls (/family/status, /family/pair); the parent gets the code
+/// by SMS ("scam guard") and the app enters it here. If the backend can't be reached
 /// (laptop off, no internet), the scan falls back to the offline copy of
 /// the rules, so the app never breaks in front of a user or a judge.
 class MockApiInterceptor extends Interceptor {
   bool _paired = false;
 
   static const _liveScan = bool.fromEnvironment('LIVE_SCAN');
+
+  static const _liveGuard = bool.fromEnvironment('LIVE_GUARD');
+
+  bool _isGuard(RequestOptions o) => o.path == ApiEndpoints.familyStatus || o.path == ApiEndpoints.familyPair;
 
   bool _isScan(RequestOptions o) => o.method == 'POST' && o.path == ApiEndpoints.scanCheck;
 
@@ -23,6 +29,12 @@ class MockApiInterceptor extends Interceptor {
       options.headers['ngrok-skip-browser-warning'] = 'true';
       options.connectTimeout = const Duration(seconds: 5);
       options.receiveTimeout = const Duration(seconds: 8);
+      handler.next(options); // real backend
+      return;
+    }
+
+    if (_liveGuard && _isGuard(options)) {
+      options.connectTimeout = const Duration(seconds: 5);
       handler.next(options); // real backend
       return;
     }

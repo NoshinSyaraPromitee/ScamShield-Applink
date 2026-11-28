@@ -53,7 +53,7 @@ func main() {
 	fwd.OnHighRisk = guard.Alert
 	router.WithGuard(guard)
 
-	srv := server.New(router, fb).WithSubscriptions(subs, os.Getenv("APPLINK_APP_ID"), os.Getenv("APPLINK_PASSWORD"))
+	srv := server.New(router, fb).WithGuard(guard).WithSubscriptions(subs, os.Getenv("APPLINK_APP_ID"), os.Getenv("APPLINK_PASSWORD"))
 	addr := env("ADDR", ":8080")
 	log.Println("ScamShield backend listening on", addr)
 	log.Fatal(http.ListenAndServe(addr, srv.Handler()))

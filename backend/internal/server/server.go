@@ -16,6 +16,7 @@ type Server struct {
 	fb     detect.Fallback
 
 	// Subscription notifications (optional; see WithSubscriptions).
+	guard    *Guard
 	subs     *Subscribers
 	appID    string
 	password string
@@ -31,11 +32,16 @@ func (s *Server) WithSubscriptions(subs *Subscribers, appID, password string) *S
 	return s
 }
 
+// WithGuard enables the app-facing /family endpoints.
+func (s *Server) WithGuard(g *Guard) *Server { s.guard = g; return s }
+
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ok")) })
 	mux.HandleFunc("POST /scan/check", s.scanCheck)
 	mux.HandleFunc("POST /link/check", s.linkCheck)
+	mux.HandleFunc("GET /family/status", s.familyStatus)
+	mux.HandleFunc("POST /family/pair", s.familyPair)
 	mux.HandleFunc("POST /sms/receive", s.smsReceive)
 	mux.HandleFunc("POST /ussd/receive", s.ussdReceive)
 	mux.HandleFunc("POST /subscription/notify", s.subscriptionNotify)
@@ -47,6 +53,14 @@ func (s *Server) Handler() http.Handler {
 	})
 	// The Flutter app prefixes calls with /api/v1.
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// CORS so the Flutter web build (another port) can call us.
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, X-Device-Id, ngrok-skip-browser-warning")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
 		if strings.HasPrefix(r.URL.Path, "/api/v1/") {
 			http.StripPrefix("/api/v1", mux).ServeHTTP(w, r)
 			return
