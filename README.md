@@ -1,43 +1,78 @@
-# ScamShield
+# ScamShield BD
 
-SMS/USSD scam protection for Bangladesh, built on Banglalink AppLink for AppQuest 2.0.
+Bangla-first scam protection for Banglalink users, built on **Banglalink AppLink** for **AppQuest 2.0** (Team Buildship, IUT).
+Theme 4: Frontier Technologies & Resilient Systems · Category 12: Cybersecurity, Digital Identity & Privacy.
 
-- `app/` – Flutter app (share-to-check, Scam Simulator, helplines, Family Guard). Calls only our backend.
-- `backend/` – Go backend: rules engine, AppLink webhooks (`/sms/receive`, `/ussd/receive`), `/scan/check` for the app.
+Users text `scam <suspicious message>` to **21213** and get a Banglish verdict with safe next steps. `scam help` walks them through what to do after being scammed. Family Guard (Tk 30/month via AppLink Subscription) lets adult children protect their parents.
 
-## Run the backend
+## Repository
 
-```
-cd backend
-go test ./...
-APPLINK_SMS_URL=http://localhost:7000/sms/send go run ./cmd/server
-go run ./cmd/evaluate testdata/messages.csv   # precision/recall
-```
-
-Env: `ADDR` (default `:8080`), `APPLINK_SMS_URL`, `APPLINK_APP_ID`, `APPLINK_PASSWORD`.
-Develop against the AppLink mock server until app approval arrives; the Applink-as-a-Skill
-files are proprietary and are **not** part of this repo.
-
-## Status (honest)
-
-| Part | State |
+| Folder | What it is |
 |---|---|
-| Rules engine (MFS, government, job/prize, Bangla/Banglish/English) | Implemented, unit-tested |
-| SMS forward-to-check (join multi-part, ask sender, reply) | Implemented, tested with a fake sender; **not yet run against the AppLink sandbox** |
-| USSD, OTP, subscription | Not implemented (USSD webhook is a stub) |
-| LLM fallback | Interface only; not wired |
-| Evaluation | `testdata/messages.csv` is a 7-row sample; the real 200-message set is pending |
+| `backend/` | Go backend: SMS router, scam rules engine, OTP sign-up + subscription, AppLink client |
+| `callbacks/` | Vercel HTTPS endpoints AppLink calls (`/sms/receive`, `/sms/report`, `/caas/notify`, `/subscription/notify`); they answer `S1000` and relay to the backend |
+| `app/` | Flutter app: share-to-check, result screen, Scam Simulator, offline "I've been scammed" guide, Family Guard, EN/BN |
+| `content/` | `emergency_tree.json`: fixed emergency decision tree with verified hotlines (used by the app and the backend) |
 
-AppLink request/response field names were written from the public docs and must be verified in the sandbox.
+## Architecture
+
+    Banglalink user --SMS "scam ..."--> AppLink (21213)
+        --> https://scamshield-callbacks.vercel.app/sms/receive   (HTTPS, always S1000)
+        --> Go backend: router -> scam check | join/OTP | help | guard
+        --> AppLink /sms/send --> reply SMS to the user
+
+AppLink API calls leave from our provisioned IP (E1303). Users are keyed by the raw `sourceAddress` because number masking is ON.
+
+## SMS commands (short code 21213)
+
+| User sends | Result |
+|---|---|
+| `scam <message>` | Scam check (rules engine); asks for the sender number if missing; joins multi-part SMS |
+| `scam join` → `scam <OTP>` | OTP sign-up that activates the Family Guard subscription |
+| `scam help` → `scam <number>` | Emergency guide over SMS |
+| `scam guard <code>` | Family Guard pairing (in progress) |
+| `unreg scam` | Unsubscribe (handled by AppLink) |
+
+## AppLink APIs used
+
+| API | Use | Status |
+|---|---|---|
+| SMS (receive, send, delivery report) | Forward-to-check, replies | Implemented; app submitted for approval |
+| OTP | Sign-up | Implemented, tested against the AppLink mock |
+| Subscription | Family Guard Tk 30/month | Implemented, tested against the AppLink mock |
+| CaaS | One-time incident report | Provisioned; roadmap |
+| USSD | Feature-phone menu | Blocked: no keyword available on 213 (requested) |
+
+## Run it
+
+    cd backend
+    go test ./...
+    go run ./cmd/server                       # listens on :8080
+    go run ./cmd/evaluate testdata/messages.csv
+
+    cd app
+    flutter pub get
+    flutter gen-l10n
+    dart run build_runner build
+    flutter run -t lib/main_staging.dart
+
+Env: `ADDR`, `APPLINK_SMS_URL`, `APPLINK_APP_ID`, `APPLINK_PASSWORD`, `APPLINK_OTP_REQUEST_URL`, `APPLINK_OTP_VERIFY_URL`, `APPLINK_SUBSCRIPTION_SEND_URL`, `APPLINK_SUBSCRIPTION_CHARGING_INFO_URL`, `HELP_TREE`.
+Callbacks (Vercel): `BACKEND_URL`.
+
+## Honest status
+
+- Live AppLink traffic depends on app approval; until then flows are tested with unit tests and the AppLink mock server.
+- The detection test set is small; precision/recall numbers are in the proposal PDF.
+- No LLM fallback is enabled in this version (interface only; would receive redacted text only).
+- Charging: standard AppLink SMS charges apply; Family Guard is Tk 30/month.
 
 ## Prior work declaration
 
-The Flutter app scaffold and the project setup were reused from our earlier PlantPal project
-(project structure, tooling). All ScamShield logic is new for this competition.
+The Flutter app scaffold and project tooling were reused from our earlier PlantPal project. All ScamShield logic is new for this competition.
 
 ## AI-use and third-party services declaration
 
-- AI tools: Claude Code (Anthropic) was used to help write code, including the Go backend and tests; all code is reviewed by the team.
-- Runtime AI: an optional LLM second opinion (Gemini/Claude) is planned for borderline messages and would receive **redacted text only** (numbers and links stripped). Not enabled in this version.
-- Third-party services: Banglalink AppLink (SMS, USSD, OTP, Subscription).
-- Test data: real SMS used for testing must have names and numbers removed; collection method is documented with the dataset.
+- AI tools: Claude (Anthropic) helped write code, content and documentation; all output was reviewed by the team.
+- Third-party services: Banglalink AppLink (SMS, OTP, Subscription, CaaS), Vercel (HTTPS callbacks).
+- The Applink-as-a-Skill files are proprietary and are **not** part of this repo.
+- Test data: real SMS have names and numbers removed; sources are documented with the dataset.
