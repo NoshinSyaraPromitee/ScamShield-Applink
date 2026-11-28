@@ -13,9 +13,9 @@ import (
 
 // Guard runs Family Guard over SMS.
 //
-//parent: scam guard          -> gets a 4-digit code (parent opts in = consent)
-//child:  scam guard 4821     -> paired (child must have the paid plan)
-//either: scam guard stop     -> unpaired
+// parent: scam guard          -> gets a 4-digit code (parent opts in = consent)
+// child:  scam guard 4821     -> paired (child must have the paid plan)
+// either: scam guard stop     -> unpaired
 //
 // When a parent's forwarded message is HIGH risk, every paired child gets a
 // short alert. The alert never contains the message text or any number.
@@ -28,8 +28,12 @@ type Guard struct {
 	mu        sync.Mutex
 	codes     map[string]guardCode // code -> parent
 	guardians map[string][]string  // parent -> children
-	now       func() time.Time
-	newCode   func() string
+	// DemoCode, if set (env GUARD_DEMO_CODE), always pairs the app so a demo
+	// works without a real parent phone. Leave empty in production.
+	DemoCode string
+
+	now     func() time.Time
+	newCode func() string
 }
 
 type guardCode struct {

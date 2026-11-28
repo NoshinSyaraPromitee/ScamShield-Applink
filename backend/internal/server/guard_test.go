@@ -156,3 +156,14 @@ func TestPairAppAndStatus(t *testing.T) {
 		t.Fatal("not paired")
 	}
 }
+
+func TestPairAppDemoCode(t *testing.T) {
+	g := NewGuard(&fakeSender{}, nil)
+	if got := g.PairApp(context.Background(), "app:demo", "1234"); got != "bad_code" {
+		t.Fatalf("demo code must be off by default, got %q", got)
+	}
+	g.DemoCode = "1234"
+	if got := g.PairApp(context.Background(), "app:demo", "1234"); got != "" || !g.isGuardian("app:demo") {
+		t.Fatalf("got %q", got)
+	}
+}

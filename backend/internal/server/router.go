@@ -12,12 +12,12 @@ import (
 // Everything reaches us as "scam <text>" (the keyword may or may not still be
 // at the front, and later parts of a long message never have it):
 //
-//scam join          -> start paid sign-up (OTP)      Signup
-//scam 482913        -> OTP reply while sign-up waits  Signup
-//scam help          -> emergency guide (tree)        Help
-//scam 2             -> menu choice while in help     Help
-//scam guard [code]  -> Family Guard pairing          Guard
-//anything else      -> scam check                    Forwarder
+// scam join          -> start paid sign-up (OTP)      Signup
+// scam 482913        -> OTP reply while sign-up waits  Signup
+// scam help          -> emergency guide (tree)        Help
+// scam 2             -> menu choice while in help     Help
+// scam guard [code]  -> Family Guard pairing          Guard
+// anything else      -> scam check                    Forwarder
 //
 // "unreg scam" is not routed here: AppLink handles it on the shared code and
 // tells us through /subscription/notify (to be confirmed with AppLink).

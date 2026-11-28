@@ -50,6 +50,10 @@ func main() {
 		log.Println("guard: plan check OFF (demo mode)")
 	}
 	guard := server.NewGuard(sender, isSub)
+	guard.DemoCode = os.Getenv("GUARD_DEMO_CODE")
+	if guard.DemoCode != "" {
+		log.Println("guard: DEMO code enabled")
+	}
 	fwd.OnHighRisk = guard.Alert
 	router.WithGuard(guard)
 

@@ -27,6 +27,9 @@ func (g *Guard) isGuardian(user string) bool {
 func (g *Guard) PairApp(ctx context.Context, user, code string) string {
 	g.mu.Lock()
 	c, ok := g.codes[code]
+	if !ok && g.DemoCode != "" && code == g.DemoCode {
+		c, ok = guardCode{parent: "demo:parent", at: g.now()}, true
+	}
 	if ok && g.now().Sub(c.at) > guardCodeTTL {
 		delete(g.codes, code)
 		ok = false
@@ -51,7 +54,9 @@ func (g *Guard) PairApp(ctx context.Context, user, code string) string {
 	}
 	delete(g.codes, code)
 	g.mu.Unlock()
-	g.reply(ctx, c.parent, msgGuardPaired) // tell the parent by SMS
+	if !strings.HasPrefix(c.parent, "demo:") {
+		g.reply(ctx, c.parent, msgGuardPaired) // tell the parent by SMS
+	}
 	return ""
 }
 
