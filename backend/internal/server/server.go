@@ -41,7 +41,18 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /subscription/notify", s.subscriptionNotify)
 	mux.HandleFunc("POST /sms/report", s.ack)
 	mux.HandleFunc("POST /caas/notify", s.ack)
-	return mux
+	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, map[string]any{"service": "ScamShield backend", "status": "ok",
+			"endpoints": []string{"GET /healthz", "POST /scan/check", "POST /link/check", "POST /sms/receive"}})
+	})
+	// The Flutter app prefixes calls with /api/v1.
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/api/v1/") {
+			http.StripPrefix("/api/v1", mux).ServeHTTP(w, r)
+			return
+		}
+		mux.ServeHTTP(w, r)
+	})
 }
 
 // scanCheck is what the Flutter app calls.
