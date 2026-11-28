@@ -44,11 +44,15 @@ var (
 		code  string
 		words []string
 	}{
-		{"urgency", []string{"urgent", "immediately", "within 24", "today", "blocked", "suspend", "legal action", "joruri", "ajkei", "block hoye", "জরুরি", "ব্লক", "আজই", "২৪ ঘণ্টা", "বন্ধ হয়ে"}},
-		{"asks_secret", []string{"pin", "otp", "password", "code den", "code pathan", "পিন", "ওটিপি", "পাসওয়ার্ড"}},
+		{"urgency", []string{"urgent", "immediately", "within 24", "blocked", "suspend", "legal action", "joruri", "ajkei", "block hoye", "জরুরি", "ব্লক", "আজই", "২৪ ঘণ্টা", "বন্ধ হয়ে"}},
+		{"asks_secret", []string{"pin", "otp", "password", "code den", "code pathan", "share the code", "send the code", "পিন", "ওটিপি", "পাসওয়ার্ড"}},
 		{"too_good", []string{"won", "cashback", "prize", "lottery", "bonus", "gift", "puroskar", "ক্যাশব্যাক", "পুরস্কার", "লটারি", "উপহার"}},
-		{"pay_fast", []string{"% off", "discount", "pay now", "fine", "jorimana", "ছাড়", "জরিমানা"}},
+		{"pay_fast", []string{"% off", "discount", "pay now", "fine", "fee", "refund", "jorimana", "ছাড়", "জরিমানা", "ফি", "ফেরত"}},
+		{"wrong_transfer", []string{"wrong transaction", "by mistake", "vul kore", "ভুল করে"}},
 	}
+
+	// Phrases that mean the message WARNS about secrets rather than asks for them.
+	warnRe = regexp.MustCompile(`(?i)do not share|don.t share|never share|শেয়ার করবেন না|কাউকে দেবেন না|dibena|dien na`)
 
 	phoneRe = regexp.MustCompile(`(?:\+?88)?01[3-9]\d{8}`)
 	asciiRe = regexp.MustCompile(`^[\x00-\x7F]+$`)
@@ -111,7 +115,11 @@ func Analyze(message, sender string) Result {
 			flag("unofficial_link", u)
 		}
 	}
+	warns := warnRe.MatchString(message)
 	for _, r := range rules {
+		if warns && r.code == "asks_secret" {
+			continue
+		}
 		for _, w := range r.words {
 			if f := find(message, w); f != "" {
 				flag(r.code, f)

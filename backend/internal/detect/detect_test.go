@@ -13,6 +13,9 @@ func TestAnalyze(t *testing.T) {
 		{"dmp trusted", "Traffic case notice from DMP", "+8801320042207", RiskLow},
 		{"dmp spoof", "Traffic fine pay now http://dmp-fine.top", "01320042208", RiskHigh},
 		{"legit", "Ajke raate khabo, tumi ki ashba?", "", RiskNone},
+		{"wrong transfer", "Vul kore apnar bkash e 5000 taka chole gese, code ta pathan please", "01311223344", RiskMedium},
+		{"otp warning is not a scam", "Your OTP for bKash app login is 4821. Do not share it with anyone.", "", RiskNone},
+		{"today alone is not urgency", "Hi, are we meeting at 5pm today at the cafe?", "", RiskNone},
 		{"official link", "Check your balance at https://www.bkash.com", "", RiskNone},
 	}
 	for _, c := range cases {
