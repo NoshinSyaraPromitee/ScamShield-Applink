@@ -31,3 +31,33 @@ func TestRedact(t *testing.T) {
 		t.Fatalf("got %q", got)
 	}
 }
+
+func TestCheckLink(t *testing.T) {
+	cases := []struct {
+		url  string
+		want string
+	}{
+		{"http://bkash-verify.xyz", "lookalike_domain"},
+		{"https://bit.ly/abc", "shortened_link"},
+		{"http://103.5.6.7/login", "ip_link"},
+		{"http://files.example.top/app.apk", "apk_download"},
+		{"http://xn--bkash-abc.com", "punycode_link"},
+	}
+	for _, c := range cases {
+		found := false
+		for _, r := range CheckLink(c.url).Reasons {
+			if r == c.want {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("%s: want %s, got %v", c.url, c.want, CheckLink(c.url).Reasons)
+		}
+	}
+	if v := CheckLink("https://www.bkash.com/help"); !v.Official || len(v.Reasons) != 0 {
+		t.Errorf("official link flagged: %+v", v)
+	}
+	if v := CheckLink("https://bkash.com.evil.top"); v.Official {
+		t.Error("suffix trick treated as official")
+	}
+}

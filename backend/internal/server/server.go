@@ -35,6 +35,7 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ok")) })
 	mux.HandleFunc("POST /scan/check", s.scanCheck)
+	mux.HandleFunc("POST /link/check", s.linkCheck)
 	mux.HandleFunc("POST /sms/receive", s.smsReceive)
 	mux.HandleFunc("POST /ussd/receive", s.ussdReceive)
 	mux.HandleFunc("POST /subscription/notify", s.subscriptionNotify)
@@ -132,4 +133,16 @@ func (s *Server) ussdReceive(w http.ResponseWriter, r *http.Request) {
 func writeJSON(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(v)
+}
+
+// linkCheck inspects one link (official list, lookalike, shortener, IP, .apk).
+func (s *Server) linkCheck(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		URL string `json:"url"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<12)).Decode(&in); err != nil || in.URL == "" {
+		http.Error(w, "url required", http.StatusBadRequest)
+		return
+	}
+	writeJSON(w, detect.CheckLink(in.URL))
 }

@@ -22,7 +22,9 @@ Safeguards:
 - **Known-good senders.** DMP says real traffic-case SMS come only from 01320-042207 and 01320-042227. Those senders get `low` (never "safe"), unless the message also has an unofficial link. A spoofed near-number gets no trust.
 - **Warnings are not requests.** "Do not share your OTP" and "dibena" suppress `asks_secret`, so real OTP/security notices are not flagged.
 - **Never "100% safe".** The lowest verdict still says the check cannot guarantee safety.
-- **Optional AI second opinion.** Interface exists (`detect.Fallback`) and would run only on medium results with phone numbers and links replaced by `[NUMBER]` / `[LINK]` first. It is not switched on in this version.
+- **Optional AI second opinion.** `detect.LLMFallback` (Claude) runs only on medium results, after phone numbers and links are replaced by `[NUMBER]` / `[LINK]`. It is off unless `ANTHROPIC_API_KEY` is set, any error keeps the rules result, and a unit test checks that no number or link reaches the API. Not yet tested against the live API.
+- **Link checker.** `CheckLink` (also `POST /link/check`) flags unofficial domains, lookalike brand domains (e.g. bkash-verify.xyz), URL shorteners, raw-IP links, punycode and direct .apk downloads. Official match is exact-or-subdomain, so bkash.com.evil.top is not trusted.
+- **Delivery retries.** Failed SMS (including Family Guard alerts) are queued in memory and retried with backoff (2s, 10s, 30s, 2min); a restart drops the queue.
 
 ## Evaluation
 
@@ -43,4 +45,5 @@ Fixes made from the first-pass errors and a second pass with extra scam patterns
 
 - Rules cannot understand new wording; an attacker can rephrase around keywords.
 - No number blacklist is kept, by design (a wrong report must not harm an innocent person).
-- Screenshot OCR and a link/app checker beyond the official-domain list are roadmap items.
+- Screenshot OCR is not built (roadmap). The link checker works on text only and does not fetch pages.
+- The retry queue is in memory only.

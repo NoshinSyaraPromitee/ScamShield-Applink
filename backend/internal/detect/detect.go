@@ -105,14 +105,8 @@ func Analyze(message, sender string) Result {
 	}
 
 	for _, u := range linkRe.FindAllString(message, -1) {
-		official := false
-		for _, d := range officialDomains {
-			if strings.Contains(strings.ToLower(u), d) {
-				official = true
-			}
-		}
-		if !official {
-			flag("unofficial_link", u)
+		for _, code := range CheckLink(u).Reasons {
+			flag(code, u)
 		}
 	}
 	warns := warnRe.MatchString(message)
@@ -135,7 +129,7 @@ func Analyze(message, sender string) Result {
 
 	var score float64
 	for _, r := range reasons {
-		if r == "asks_secret" || r == "unofficial_link" {
+		if r == "asks_secret" || r == "unofficial_link" || r == "lookalike_domain" || r == "apk_download" {
 			score += 0.35
 		} else {
 			score += 0.2

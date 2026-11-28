@@ -56,7 +56,9 @@ AppLink API calls leave from our provisioned IP (E1303). Users are keyed by the 
     dart run build_runner build
     flutter run -t lib/main_staging.dart
 
-Env: `ADDR`, `APPLINK_SMS_URL`, `APPLINK_APP_ID`, `APPLINK_PASSWORD`, `APPLINK_OTP_REQUEST_URL`, `APPLINK_OTP_VERIFY_URL`, `APPLINK_SUBSCRIPTION_SEND_URL`, `APPLINK_SUBSCRIPTION_CHARGING_INFO_URL`, `HELP_TREE`.
+Env: `ADDR`, `APPLINK_SMS_URL`, `APPLINK_APP_ID`, `APPLINK_PASSWORD`, `APPLINK_OTP_REQUEST_URL`, `APPLINK_OTP_VERIFY_URL`, `APPLINK_SUBSCRIPTION_SEND_URL`, `APPLINK_SUBSCRIPTION_CHARGING_INFO_URL`, `HELP_TREE`, `ANTHROPIC_API_KEY` (optional LLM second opinion), `GUARD_REQUIRE_SUB`.
+
+Free hosting from a laptop: `scripts/run-tunnel.ps1` (Cloudflare quick tunnel to the Vercel relay). Detection details: `docs/detection.md`.
 Callbacks (Vercel): `BACKEND_URL`.
 
 ## Honest status

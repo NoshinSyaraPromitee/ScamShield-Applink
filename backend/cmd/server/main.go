@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/scamshield/backend/internal/applink"
+	"github.com/scamshield/backend/internal/detect"
 	"github.com/scamshield/backend/internal/server"
 )
 
@@ -19,11 +20,21 @@ func main() {
 		SubscriptionURL: os.Getenv("APPLINK_SUBSCRIPTION_SEND_URL"),
 		ChargingInfoURL: os.Getenv("APPLINK_SUBSCRIPTION_CHARGING_INFO_URL"),
 	})
-	fwd := server.NewForwarder(client, nil) // no LLM fallback wired yet
-	signup := server.NewSignup(client, client)
-	router := server.NewRouter(client, fwd, signup)
+	// Failed SMS are retried with backoff instead of being lost.
+	sender := server.NewRetrySender(client)
 
-	if help, err := server.LoadHelp(env("HELP_TREE", "../content/emergency_tree.json"), client); err != nil {
+	// Optional LLM second opinion on borderline messages (redacted text only).
+	var fb detect.Fallback
+	if key := os.Getenv("ANTHROPIC_API_KEY"); key != "" {
+		fb = detect.NewLLMFallback(key)
+		log.Println("llm: second opinion ON (redacted text only)")
+	}
+
+	fwd := server.NewForwarder(sender, fb)
+	signup := server.NewSignup(client, client)
+	router := server.NewRouter(sender, fwd, signup)
+
+	if help, err := server.LoadHelp(env("HELP_TREE", "../content/emergency_tree.json"), sender); err != nil {
 		log.Printf("help: %v (using short placeholder reply)", err)
 	} else {
 		router.WithHelp(help)
@@ -38,11 +49,11 @@ func main() {
 		isSub = nil
 		log.Println("guard: plan check OFF (demo mode)")
 	}
-	guard := server.NewGuard(client, isSub)
+	guard := server.NewGuard(sender, isSub)
 	fwd.OnHighRisk = guard.Alert
 	router.WithGuard(guard)
 
-	srv := server.New(router, nil).WithSubscriptions(subs, os.Getenv("APPLINK_APP_ID"), os.Getenv("APPLINK_PASSWORD"))
+	srv := server.New(router, fb).WithSubscriptions(subs, os.Getenv("APPLINK_APP_ID"), os.Getenv("APPLINK_PASSWORD"))
 	addr := env("ADDR", ":8080")
 	log.Println("ScamShield backend listening on", addr)
 	log.Fatal(http.ListenAndServe(addr, srv.Handler()))
