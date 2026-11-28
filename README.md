@@ -78,3 +78,11 @@ The Flutter app scaffold and project tooling were reused from our earlier PlantP
 - Third-party services: Banglalink AppLink (SMS, OTP, Subscription, CaaS), Vercel (HTTPS callbacks).
 - The Applink-as-a-Skill files are proprietary and are **not** part of this repo.
 - Test data: real SMS have names and numbers removed; sources are documented with the dataset.
+## Try Family Guard on localhost
+
+    node scripts/mock-sms.js                                   # prints every SMS the backend sends
+    cd backend && GUARD_REQUIRE_SUB=false go run ./cmd/server   # demo mode: no paid plan needed
+    # parent: scam guard      -> code      child: scam guard <code>
+    curl -X POST localhost:8080/sms/receive -d '{"sourceAddress":"tel:PARENT","message":"scam guard"}'
+
+Without the mock (or live AppLink) nothing answers on :7000, so replies fail and are retried.
